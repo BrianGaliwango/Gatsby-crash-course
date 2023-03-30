@@ -7,7 +7,7 @@
 /**
  * @type {import('gatsby').GatsbyNode['createPages']}
  */
-exports.createPages = async ({ actions }) => {
+exports.createPages = async ({ actions, }) => {
   const { createPage } = actions
   createPage({
     path: "/using-dsg",
@@ -15,4 +15,46 @@ exports.createPages = async ({ actions }) => {
     context: {},
     defer: true,
   })
+  
+}
+
+const path = require('path');
+
+exports.createPages = async ({actions, graphql}) => {
+  const { createPage } = actions
+
+  const postTemplate = path.resolve('./src/templates/blogPost.js')
+
+  const res = await graphql(`
+      {
+        allMarkdownRemark {
+          edges {
+            node {
+              html
+              id 
+              frontmatter {
+                path
+                title
+                date
+                author
+              }
+            }
+          }
+        }
+      } 
+  `)
+  if (res.errors) {
+    return Promise.reject(res.errors);
+  } else {
+    res.data.allMarkdownRemark.edges.map(({ node }) => {
+      createPage({
+        path: node.frontmatter.path,
+        component: postTemplate,
+        context: {
+          path: node.frontmatter.path
+        },
+        defer: true,
+      });
+    });
+  }
 }
